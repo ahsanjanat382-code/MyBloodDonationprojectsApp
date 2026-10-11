@@ -1,1 +1,53 @@
 
+name: Build BloodLink APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install unzip
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Extract project ZIP
+        run: |
+          mkdir -p source
+          unzip -o blood_donation_app_source.zip -d source
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Prepare Android project
+        working-directory: source/blood_donation_app
+        run: flutter create --platforms=android .
+
+      - name: Get dependencies
+        working-directory: source/blood_donation_app
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: source/blood_donation_app
+        run: flutter build apk --debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BloodLink-Android-APK
+          path: source/blood_donation_app/build/app/outputs/flutter-apk/app-debug.apk
+
